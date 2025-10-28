@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pedidos por Reparto — Simple</title>
   <style>
-    :root{--bg:#0b0c10;--card:#111318;--muted:#8b929e;--text:#e9eef5;--brand:#ff3b3b;--ok:#16a34a;--warn:#f59e0b;}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial}
+    :root{--bg:#0b0c10;--card:#111318;--muted:#8b929e;--text:#e9eef5;--brand:#ff3b3b}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto}
     header{padding:18px 22px;border-bottom:1px solid #1d2026;display:flex;gap:14px;align-items:center}
     header h1{font-size:18px;margin:0;font-weight:700}
-    header .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
     main{max-width:1200px;margin:22px auto;padding:0 16px}
     .card{background:var(--card);border:1px solid #1d2026;border-radius:14px;padding:16px}
     .grid{display:grid;gap:12px}
@@ -18,38 +17,24 @@
     input,select,button{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a2f37;background:#0f1116;color:var(--text);outline:none}
     button{background:var(--brand);border-color:transparent;font-weight:700;cursor:pointer}
     button.secondary{background:#0f1116;border:1px solid #2a2f37}
-    button:disabled{opacity:.6;cursor:not-allowed}
     .row{display:flex;gap:10px;flex-wrap:wrap}
     .table-wrap{overflow:auto;border:1px solid #1d2026;border-radius:12px}
     table{border-collapse:collapse;width:100%;min-width:880px}
     th,td{padding:10px 12px;border-bottom:1px solid #1d2026;font-size:14px;text-align:left;white-space:nowrap}
     th{position:sticky;top:0;background:#0f1116;z-index:1}
-    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #2a2f37;color:var(--muted)}
-    .badge.ok{color:#c7facc;border-color:#16361f;background:#0f1b12}
-    .badge.warn{color:#ffe9bf;border-color:#3b2d13;background:#17120a}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #2a2f37;color:#cbd5e1}
+    .ok{color:#c7facc;border-color:#16361f;background:#0f1b12}
+    .warn{color:#ffe9bf;border-color:#3b2d13;background:#17120a}
     .muted{color:var(--muted)}
-    .spacer{height:10px}
-    footer{opacity:.7;font-size:12px;text-align:center;padding:14px}
   </style>
 </head>
 <body>
-  <header>
-    <div class="dot"></div>
-    <h1>Pedidos por Reparto</h1>
-    <span class="muted">Chess ERP · /Ventas/pedidos</span>
-  </header>
-
+  <header><h1>Pedidos por Reparto</h1><span class="muted">Chess ERP</span></header>
   <main>
     <div class="card">
       <div class="grid cols-4">
-        <div>
-          <label>Fecha entrega — desde</label>
-          <input type="date" id="fechaDesde">
-        </div>
-        <div>
-          <label>Fecha entrega — hasta</label>
-          <input type="date" id="fechaHasta">
-        </div>
+        <div><label>Fecha entrega — desde</label><input type="date" id="fechaDesde"></div>
+        <div><label>Fecha entrega — hasta</label><input type="date" id="fechaHasta"></div>
         <div>
           <label>Estado de factura</label>
           <select id="facturado">
@@ -60,14 +45,10 @@
         </div>
         <div>
           <label>Reparto</label>
-          <select id="reparto">
-            <option value="">(cargar repartos…)</option>
-          </select>
+          <select id="reparto"><option value="">(cargar repartos…)</option></select>
         </div>
       </div>
-
-      <div class="spacer"></div>
-      <div class="row">
+      <div class="row" style="margin-top:10px">
         <button id="btnCargarRepartos" class="secondary">🔁 Cargar repartos</button>
         <button id="btnListar">📦 Listar pedidos</button>
         <button id="btnCSV" class="secondary" disabled>⬇️ Exportar CSV</button>
@@ -75,15 +56,7 @@
       <div id="msg" class="muted" style="margin-top:8px;"></div>
     </div>
 
-    <div class="spacer"></div>
-
-    <div class="card">
-      <div class="row" style="justify-content:space-between;align-items:center;">
-        <div><strong>Resultado</strong> <span id="count" class="badge">0 ítems</span></div>
-        <div class="muted">Tip: el combo de Repartos se arma en base a los pedidos del rango seleccionado.</div>
-      </div>
-      <div class="spacer"></div>
-
+    <div class="card" style="margin-top:12px">
       <div class="table-wrap">
         <table id="tabla">
           <thead id="thead"></thead>
@@ -93,100 +66,92 @@
     </div>
   </main>
 
-  <footer>Simple Distribuciones — hecho con ❤️</footer>
-
   <script>
     const $ = (id)=>document.getElementById(id);
     const fmtDate = (d)=> d instanceof Date ? d.toISOString().slice(0,10) : d;
 
-    function setDefaults() {
+    function init() {
       const hoy = new Date();
       const desde = new Date(hoy); desde.setDate(hoy.getDate()-7);
       $("fechaDesde").value = fmtDate(desde);
       $("fechaHasta").value = fmtDate(hoy);
       $("facturado").value = "all";
-      $("reparto").innerHTML = `<option value="">(cargar repartos…)</option>`;
       $("btnCSV").disabled = true;
-      setMsg("Listo. Elegí rango y cargá repartos.");
+      setMsg("Elegí rango y cargá repartos.");
     }
-
     function setMsg(t){ $("msg").textContent = t || ""; }
-    function setCount(n){ $("count").textContent = `${n} ítems`; }
 
     function readFilters(includeReparto=true){
-      const fDesde = $("fechaDesde").value;
-      const fHasta = $("fechaHasta").value;
-      const fact = $("facturado").value; // "all" | "true" | "false"
-      const reparto = includeReparto ? $("reparto").value : "";
-      const params = new URLSearchParams({ fechaDesde: fDesde, fechaHasta: fHasta });
-      if (fact !== "all") params.set("facturado", fact);
-      if (includeReparto && reparto) params.set("idReparto", reparto);
-      return params.toString();
+      const p = new URLSearchParams();
+      p.set("fechaDesde", $("fechaDesde").value);
+      p.set("fechaHasta", $("fechaHasta").value);
+      const f = $("facturado").value;
+      if (f !== "all") p.set("facturado", f);
+      if (includeReparto && $("reparto").value) p.set("idReparto", $("reparto").value);
+      return p.toString();
     }
 
     async function cargarRepartos(){
       setMsg("Cargando repartos…");
       $("reparto").innerHTML = `<option value="">(cargando…)</option>`;
       try{
-        const qs = readFilters(false);
-        const r = await fetch(`/api/pedidos-repartos?${qs}`);
-        if(!r.ok){ throw new Error(`HTTP ${r.status}`); }
-        const lista = await r.json(); // [{idReparto, dsReparto}]
-        if(!Array.isArray(lista)) throw new Error("Respuesta inesperada");
+        const r = await fetch(`/api/pedidos-repartos?${readFilters(false)}`);
+        if(!r.ok) throw new Error(`HTTP ${r.status}`);
+        const lista = await r.json();
         lista.sort((a,b)=> (a.dsReparto||"").localeCompare(b.dsReparto||""));
-        let html = `<option value="">(todos)</option>`;
-        for(const it of lista){
-          const id = it.idReparto ?? "";
-          const ds = it.dsReparto ?? "";
-          html += `<option value="${String(id)}">${String(ds || id)}</option>`;
-        }
-        $("reparto").innerHTML = html || `<option value="">(sin datos)</option>`;
-        setMsg(`Repartos cargados (${lista.length}). Elegí uno y listá pedidos.`);
-      }catch(err){
-        console.error(err);
-        $("reparto").innerHTML = `<option value="">(error cargando)</option>`;
-        setMsg("No se pudieron cargar repartos. Revisá fechas / estado / servidor.");
+        $("reparto").innerHTML = `<option value="">(todos)</option>` + lista.map(x=>(
+          `<option value="${String(x.idReparto)}">${String(x.dsReparto||x.idReparto)}</option>`
+        )).join("");
+        setMsg(`Repartos cargados: ${lista.length}`);
+      }catch(e){
+        console.error(e);
+        $("reparto").innerHTML = `<option value="">(error)</option>`;
+        setMsg("No se pudieron cargar repartos.");
+      }
+    }
+
+    async function listarPedidos(){
+      setMsg("Buscando pedidos…");
+      try{
+        const r = await fetch(`/api/pedidos?${readFilters(true)}`);
+        if(!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        renderTable(data);
+        setMsg("Listo ✅");
+      }catch(e){
+        console.error(e);
+        renderTable([]);
+        setMsg("No se pudieron obtener pedidos.");
       }
     }
 
     function renderTable(items){
       const thead = $("thead"), tbody = $("tbody");
-      thead.innerHTML = ""; tbody.innerHTML = ""; setCount(0);
-      if(!Array.isArray(items) || items.length===0){ $("btnCSV").disabled = true; return; }
+      thead.innerHTML=""; tbody.innerHTML=""; $("btnCSV").disabled = true;
+      if(!Array.isArray(items) || items.length===0) return;
 
-      // Definimos columnas “amistosas” si aparecen
       const preferred = [
-        "idReparto","dsReparto",
-        "fechaEntrega","fecha","fechaComprobante",
-        "idPedido","numero","nroPedido",
-        "cliente.idCliente","cliente.nombre","cliente.razonSocial",
-        "facturado","estado","importeTotal","importe"
+        "idReparto","dsReparto","fechaEntrega","fecha","idPedido","numero","nroPedido",
+        "cliente.idCliente","cliente.nombre","facturado","importeTotal"
       ];
+      const flat = items.map(flatten);
       const cols = Array.from(new Set([
-        ...preferred.filter(c=> items.some(it => hasKey(it,c))),
-        ...Object.keys(flatten(items[0]))
+        ...preferred.filter(c => flat.some(r => c in r)),
+        ...Object.keys(flat[0])
       ]));
-
-      // Header
       thead.innerHTML = `<tr>${cols.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}</tr>`;
-
-      // Rows
-      const rows = items.map(it=>{
-        const flat = flatten(it);
-        return `<tr>${cols.map(c=>{
-          let v = flat[c];
+      tbody.innerHTML = flat.map(r=> `<tr>${
+        cols.map(c=>{
+          let v = r[c];
           if (c.toLowerCase().includes("fecha") && typeof v === "string") v = v.slice(0,10);
           if (c.toLowerCase()==="facturado") v = badgeBool(v);
           return `<td>${renderVal(v)}</td>`;
-        }).join("")}</tr>`;
-      }).join("");
+        }).join("")
+      }</tr>`).join("");
 
-      tbody.innerHTML = rows;
-      setCount(items.length);
-      $("btnCSV").disabled = false;
-      // store last for CSV
-      window.__lastItems = items.map(flatten);
       window.__lastCols = cols;
+      window.__lastRows = flat;
+      $("btnCSV").disabled = false;
     }
 
     function renderVal(v){
@@ -194,82 +159,43 @@
       if (typeof v === "boolean") return badgeBool(v);
       return escapeHtml(String(v));
     }
-
     function badgeBool(v){
       const val = (v===true || v==="true" || v===1 || v==="1");
       return `<span class="badge ${val?'ok':'warn'}">${val?'Facturado':'No facturado'}</span>`;
     }
-
-    function hasKey(obj, dotted){
-      const parts = dotted.split(".");
-      let cur = obj;
-      for(const p of parts){
-        if(!cur || typeof cur!=="object" || !(p in cur)) return false;
-        cur = cur[p];
-      }
-      return true;
-    }
-
     function flatten(obj, prefix="", out={}){
-      for(const [k,v] of Object.entries(obj||{})){
+      for (const [k,v] of Object.entries(obj||{})){
         const key = prefix? `${prefix}.${k}` : k;
-        if (v && typeof v === "object" && !Array.isArray(v)){
-          flatten(v, key, out);
-        } else {
-          out[key] = v;
-        }
+        if (v && typeof v === "object" && !Array.isArray(v)) flatten(v, key, out);
+        else out[key] = v;
       }
       return out;
     }
-
-    function escapeHtml(s){
-      return s.replace(/[&<>"']/g, m=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-
-    async function listarPedidos(){
-      setMsg("Buscando pedidos…");
-      try{
-        const qs = readFilters(true);
-        const r = await fetch(`/api/pedidos?${qs}`);
-        if(!r.ok){ throw new Error(`HTTP ${r.status}`); }
-        const data = await r.json(); // puede ser {data:[...]} o [...]
-        const items = Array.isArray(data) ? data : (Array.isArray(data?.data)? data.data : (Array.isArray(data?.items)? data.items : []));
-        renderTable(items);
-        setMsg("Listo ✅");
-      }catch(err){
-        console.error(err);
-        renderTable([]);
-        setMsg("No se pudieron obtener pedidos. Probá cambiando filtros.");
-      }
-    }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
     function exportCSV(){
       const cols = window.__lastCols || [];
-      const rows = window.__lastItems || [];
+      const rows = window.__lastRows || [];
       if (!cols.length || !rows.length) return;
       const header = cols.join(",");
       const body = rows.map(r=> cols.map(c=>{
-        const val = r[c];
-        const s = (val===undefined || val===null) ? "" : String(val).replace(/"/g,'""');
+        const s = r[c]==null ? "" : String(r[c]).replace(/"/g,'""');
         return `"${s}"`;
       }).join(",")).join("\n");
       const blob = new Blob([header+"\n"+body], {type:"text/csv;charset=utf-8;"});
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `pedidos_${fmtDate(new Date())}.csv`;
+      a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
       a.click();
     }
 
-    // Events
     $("btnCargarRepartos").addEventListener("click", cargarRepartos);
     $("btnListar").addEventListener("click", listarPedidos);
     $("btnCSV").addEventListener("click", exportCSV);
     ["fechaDesde","fechaHasta","facturado"].forEach(id=>{
       $(id).addEventListener("change", ()=>{ $("reparto").innerHTML=`<option value="">(cargar repartos…)</option>`; });
     });
-
-    // Init
-    setDefaults();
+    init();
   </script>
 </body>
 </html>
